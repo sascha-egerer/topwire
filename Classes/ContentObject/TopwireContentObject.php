@@ -1,6 +1,7 @@
 <?php
 namespace Topwire\ContentObject;
 
+use Topwire\Context\ContextDenormalizer;
 use Topwire\Context\TopwireContext;
 use Topwire\Turbo\Frame;
 use Topwire\Turbo\FrameOptions;
@@ -18,7 +19,10 @@ class TopwireContentObject extends AbstractContentObject
     public function render($conf = []): string
     {
         $context = $conf['context'];
-        assert($context instanceof TopwireContext);
+        if (is_string($context)) {
+            // TODO: The serialized context may miss some attributes. How to handle this?
+            $context = TopwireContext::fromUntrustedString($conf['context'], new ContextDenormalizer());
+        }
         $content = $this->renderContentWithoutRecursion($context);
         $frame = $context->getAttribute('frame');
         if (!$frame instanceof Frame
@@ -45,7 +49,7 @@ class TopwireContentObject extends AbstractContentObject
 
     private function renderContentWithoutRecursion(TopwireContext $context): string
     {
-        $actionRecursionPrefix = $context->getAttribute('plugin')?->actionName ?? null;
+        $actionRecursionPrefix = $context->getAttribute('plugin')->actionName ?? null;
         $frontendController = $this->request->getAttribute('frontend.controller');
         if (!isset($actionRecursionPrefix)
             || !$frontendController instanceof TypoScriptFrontendController

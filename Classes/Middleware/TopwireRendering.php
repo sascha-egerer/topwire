@@ -6,6 +6,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Topwire\ContentObject\TopwireContentObject;
+use Topwire\Context\ContextDenormalizer;
 use Topwire\Context\TopwireContext;
 use Topwire\Exception\InvalidContentType;
 use TYPO3\CMS\Frontend\Controller\TypoScriptFrontendController;
@@ -20,23 +21,6 @@ class TopwireRendering implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $frontendController = $request->getAttribute('frontend.controller');
-        assert($frontendController instanceof TypoScriptFrontendController);
-        $context = $request->getAttribute('topwire');
-        if (!$context instanceof TopwireContext || !$frontendController->isGeneratePage()) {
-            return $this->validateContentType($request, $handler->handle($request));
-        }
-
-        $frontendController->config['config']['debug'] = 0;
-        $frontendController->config['config']['disableAllHeaderCode'] = 1;
-        $frontendController->config['config']['disableCharsetHeader'] = 0;
-        $frontendController->pSetup = [
-            '10' => TopwireContentObject::NAME,
-            '10.' => [
-                'context' => $context,
-            ],
-        ];
-
         return $this->validateContentType($request, $handler->handle($request));
     }
 
